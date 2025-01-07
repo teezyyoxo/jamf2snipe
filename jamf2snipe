@@ -30,7 +30,7 @@
 #       _snipeit_custom_name_1234567890 = subset jamf_key
 #
 #   A list of valid subsets are:
-version = "1.0.7"
+version = "1.0.8"
 
 validsubset = [
         "general",
@@ -111,20 +111,28 @@ elif user_args.dryrun:
 # Find a valid settings.conf file.
 logging.info("Searching for a valid settings.conf file.")
 config = configparser.ConfigParser()
-logging.debug("Checking for a settings.conf in /opt/jamf2snipe ...")
-config.read("/opt/jamf2snipe/settings.conf")
-if 'snipe-it' not in set(config):
-    logging.debug("No valid config found in: /opt Checking for a settings.conf in /etc/jamf2snipe ...")
-    config.read('/etc/jamf2snipe/settings.conf')
-if 'snipe-it' not in set(config):
-    logging.debug("No valid config found in /etc Checking for a settings.conf in current directory ...")
-    config.read("settings.conf")
-if 'snipe-it' not in set(config):
-    logging.debug("No valid config found in current folder.")
-    logging.error("No valid settings.conf was found. We'll need to quit while you figure out where the settings are at. You can check the README for valid locations.")
+
+# Define the paths to check.
+paths_to_check = [
+    "/opt/jamf2snipe/settings.conf",
+    "/etc/jamf2snipe/settings.conf",
+    "settings.conf",
+]
+
+# Iterate through paths to find a valid settings.conf
+for path in paths_to_check:
+    logging.debug(f"Checking for a settings.conf in {path} ...")
+    config.read(path)
+    if 'snipe-it' in set(config):
+        print(f"settings.conf file found at: {path}")  # Print to console
+        logging.info(f"Found a valid settings.conf file at: {path}")
+        break
+else:
+    logging.debug("No valid config file found in any of the checked locations.")
+    logging.error("No valid settings.conf was found. We'll need to quit while you figure out where the settings are.")
     raise SystemExit("Error: No valid settings.conf - Exiting.")
 
-logging.info("Great, we found a settings file. Let's get started by parsing all of the settings.")
+# logging.info("Great, we found a settings file. Let's get started by parsing all of the settings.")
 
 # While setting the variables, use a try loop so we can raise a error if something goes wrong.
 try:
