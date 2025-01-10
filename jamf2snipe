@@ -9,6 +9,8 @@
 #       https://jamf.com
 #       https://snipeitapp.com
 #
+# *** CREDITS: GITHUB.COM/GROKABILITY ***
+#
 # LICENSE:
 #   MIT
 #
@@ -30,7 +32,7 @@
 #       _snipeit_custom_name_1234567890 = subset jamf_key
 #
 #   A list of valid subsets are:
-version = "1.0.8"
+version = "1.0.9"
 
 validsubset = [
         "general",
@@ -108,29 +110,57 @@ if user_args.dryrun and user_args.force:
 elif user_args.dryrun:
     print("Dryrun: Starting jamf2snipe with a dry run where no assets will be updated.")
 
-# Find a valid settings.conf file.
-logging.info("Searching for a valid settings.conf file.")
-config = configparser.ConfigParser()
+import logging
+import configparser
 
-# Define the paths to check.
-paths_to_check = [
-    "/opt/jamf2snipe/settings.conf",
-    "/etc/jamf2snipe/settings.conf",
-    "settings.conf",
-]
+def find_settings_file():
+    """
+    Searches for a valid settings.conf file in predefined locations.
+    Returns the path to the valid settings.conf file if found, otherwise raises SystemExit.
+    """
+    logging.info("Searching for a valid settings.conf file.")
+    config = configparser.ConfigParser()
 
-# Iterate through paths to find a valid settings.conf
-for path in paths_to_check:
-    logging.debug(f"Checking for a settings.conf in {path} ...")
-    config.read(path)
-    if 'snipe-it' in set(config):
-        print(f"settings.conf file found at: {path}")  # Print to console
-        logging.info(f"Found a valid settings.conf file at: {path}")
-        break
-else:
+    # Define the paths to check.
+    paths_to_check = [
+        "/opt/jamf2snipe/settings.conf",
+        "/etc/jamf2snipe/settings.conf",
+        "settings.conf",
+    ]
+
+    # Iterate through paths to find a valid settings.conf
+    for path in paths_to_check:
+        logging.debug(f"Checking for a settings.conf in {path} ...")
+        config.read(path)
+        if 'snipe-it' in set(config):
+            print(f"settings.conf file found at: {path}")  # Print to console
+            logging.info(f"Found a valid settings.conf file at: {path}")
+            return path
+
+    # If no valid config file is found, print recommended paths and template
     logging.debug("No valid config file found in any of the checked locations.")
     logging.error("No valid settings.conf was found. We'll need to quit while you figure out where the settings are.")
+
+    recommended_paths = "\n".join(paths_to_check)
+    settings_template = """
+    [snipe-it]
+    url = http://your-snipe-it-instance.com
+    api_key = your_api_key_here
+    verify_ssl = true
+    """
+
+    print("Error: No valid settings.conf - Exiting.")
+    print("\nRecommended locations/paths for settings.conf:")
+    print(recommended_paths)
+    print("\nExample settings.conf template:")
+    print(settings_template)
+
     raise SystemExit("Error: No valid settings.conf - Exiting.")
+
+# Call the function and store the path to the valid settings file
+settings_file_path = find_settings_file()
+logging.info("Great, we found a settings file. Let's get started by parsing all of the settings.")
+
 
 # logging.info("Great, we found a settings file. Let's get started by parsing all of the settings.")
 
